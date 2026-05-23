@@ -3,26 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Rakuen · Anime Sanctuary v3.4.2</title>
+    <title>Rakuen · Anime Sanctuary v3.4.2 Pro</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/fuse.js@7.0.0/dist/fuse.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
     <script>
         tailwind.config = {
             darkMode: 'class',
             theme: {
                 extend: {
-                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] },
                     colors: {
                         brand: {
-                            orange: '#ff6b2b',
+                            orange: '#f47521',
                             dark: '#050508',
                             surface: '#0d0d15',
-                            border: '#1e1e2e'
+                            border: '#1e1e2e',
+                            card: '#12121c'
                         }
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.5s ease-out forwards',
+                        'slide-up': 'slideUp 0.4s ease-out forwards',
+                        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    },
+                    keyframes: {
+                        fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
+                        slideUp: { '0%': { opacity: '0', transform: 'translateY(20px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } },
                     }
                 }
             }
@@ -30,246 +40,444 @@
     </script>
 
     <style>
-        body { background-color: #050508; color: #e2e8f0; min-height: 100vh; }
-        .glass-header { background: rgba(8, 8, 14, 0.9); backdrop-filter: blur(15px); border-bottom: 1px solid #1e1e2e; }
-        
-        .anime-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 1rem;
+        :root { --brand-orange: #f47521; }
+        body { 
+            background-color: #050508; 
+            color: #ffffff; 
+            overflow-x: hidden;
+            scrollbar-width: thin;
+            scrollbar-color: #f47521 #0d0d15;
         }
-        @media (min-width: 640px) { .anime-grid { grid-template-columns: repeat(3, 1fr); } }
-        @media (min-width: 768px) { .anime-grid { grid-template-columns: repeat(4, 1fr); gap: 1.5rem; } }
-        @media (min-width: 1024px) { .anime-grid { grid-template-columns: repeat(5, 1fr); } }
-        @media (min-width: 1280px) { .anime-grid { grid-template-columns: repeat(6, 1fr); } }
+        
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #050508; }
+        ::-webkit-scrollbar-thumb { background: #1e1e2e; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #f47521; }
+
+        .glass-nav { 
+            background: rgba(5, 5, 8, 0.85); 
+            backdrop-filter: blur(20px); 
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .hero-gradient { 
+            background: linear-gradient(0deg, #050508 0%, rgba(5,5,8,0.7) 30%, rgba(5,5,8,0) 100%); 
+        }
 
         .anime-card {
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
             background: #0d0d15;
             border-radius: 1rem;
             overflow: hidden;
-            border: 1px solid #1e1e2e;
-            transition: all 0.3s ease;
-            cursor: pointer;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
+            border: 1px solid rgba(255, 255, 255, 0.03);
         }
+
         .anime-card:hover {
-            transform: translateY(-5px);
-            border-color: #ff6b2b;
-            box-shadow: 0 10px 20px -10px rgba(255, 107, 43, 0.3);
+            transform: translateY(-8px) scale(1.03);
+            border-color: #f47521;
+            box-shadow: 0 20px 40px -15px rgba(244, 117, 33, 0.3);
+            z-index: 10;
         }
-        .anime-card img {
-            aspect-ratio: 2/3;
-            width: 100%;
-            object-cover: cover;
+
+        .horizontal-scroll {
+            display: flex;
+            overflow-x: auto;
+            scroll-behavior: smooth;
+            gap: 1.5rem;
+            padding-bottom: 1.5rem;
+            scrollbar-width: none;
         }
-        .anime-card-content { padding: 0.75rem; flex-grow: 1; }
+        .horizontal-scroll::-webkit-scrollbar { display: none; }
+
+        .scroll-container { position: relative; }
+        .scroll-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 20;
+            width: 45px;
+            height: 45px;
+            background: rgba(244, 117, 33, 0.9);
+            border-radius: 50%;
+            display: flex;
+            items-center: center;
+            justify-content: center;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .scroll-container:hover .scroll-btn { opacity: 1; }
+        .scroll-btn.left { left: -22px; }
+        .scroll-btn.right { right: -22px; }
+
+        .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
         
-        .loader {
-            width: 40px;
-            height: 40px;
-            border: 3px solid rgba(255, 107, 43, 0.1);
-            border-top: 3px solid #ff6b2b;
+        .loader-ring {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(244, 117, 33, 0.1);
+            border-top: 4px solid #f47521;
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* Fix for overlaps */
-        .line-clamp-2 {
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
+        .shimmer {
+            background: linear-gradient(90deg, #0d0d15 25%, #1a1a25 50%, #0d0d15 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite linear;
         }
+        @keyframes shimmer { to { background-position: -200% 0; } }
     </style>
 </head>
 <body class="font-sans antialiased">
 
-    <!-- Header -->
-    <header class="glass-header fixed top-0 left-0 w-full z-50">
-        <div class="container mx-auto px-4 h-16 md:h-20 flex items-center justify-between gap-4">
-            <div class="flex items-center gap-3 cursor-pointer" onclick="location.reload()">
-                <div class="w-10 h-10 bg-brand-orange rounded-xl flex items-center justify-center shadow-lg">
+    <!-- Navigation -->
+    <nav class="fixed top-0 left-0 right-0 z-[100] glass-nav h-16 md:h-20 transition-all">
+        <div class="container mx-auto px-4 md:px-8 h-full flex items-center justify-between gap-4">
+            <div class="flex items-center gap-4 cursor-pointer group" onclick="location.reload()">
+                <div class="w-10 h-10 bg-brand-orange rounded-xl flex items-center justify-center shadow-lg group-hover:rotate-12 transition-transform">
                     <i class="fas fa-dragon text-white text-xl"></i>
                 </div>
-                <h1 class="text-xl font-bold tracking-tight hidden sm:block">Rakuen <span class="text-brand-orange text-xs">v3.4.2</span></h1>
+                <div class="hidden sm:block">
+                    <h1 class="text-xl font-black tracking-tighter">RAKUEN</h1>
+                    <p class="text-[9px] text-brand-orange font-bold uppercase tracking-widest -mt-1">v3.4.2 Sanctuary Pro</p>
+                </div>
             </div>
 
-            <div class="flex-1 max-w-xl relative group">
-                <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-brand-orange transition-colors"></i>
-                <input type="text" id="searchInput" 
-                    class="w-full bg-brand-dark border border-brand-border rounded-2xl py-2.5 pl-11 pr-4 text-sm focus:outline-none focus:border-brand-orange transition-all"
-                    placeholder="Rechercher un anime...">
+            <div class="flex-1 max-w-xl relative">
+                <div class="relative group">
+                    <input type="text" id="mainSearch" 
+                        class="w-full bg-brand-surface border border-brand-border rounded-full py-2.5 pl-11 pr-4 text-sm focus:outline-none focus:border-brand-orange transition-all placeholder-gray-500"
+                        placeholder="Recherche intelligente (ex: 'tensura', 'isekai', 'slime')...">
+                    <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-brand-orange transition-colors"></i>
+                </div>
             </div>
 
             <div class="flex items-center gap-2">
-                <button id="calendarBtn" class="p-2.5 rounded-xl hover:bg-white/5 text-gray-400 hover:text-brand-orange transition-all">
-                    <i class="fas fa-calendar-alt"></i>
-                </button>
-                <button id="favBtn" class="p-2.5 rounded-xl hover:bg-white/5 text-gray-400 hover:text-red-500 transition-all">
-                    <i class="fas fa-heart"></i>
-                </button>
+                <button id="navCalendar" class="w-10 h-10 rounded-xl hover:bg-white/5 text-gray-400 hover:text-brand-orange transition-all"><i class="fas fa-calendar-alt"></i></button>
+                <button id="navFavs" class="w-10 h-10 rounded-xl hover:bg-white/5 text-gray-400 hover:text-red-500 transition-all"><i class="fas fa-heart"></i></button>
+                <div class="w-9 h-9 rounded-full bg-gradient-to-br from-brand-orange to-orange-700 border border-white/10 ml-2"></div>
             </div>
         </div>
-    </header>
+    </nav>
 
-    <!-- Main -->
-    <main class="container mx-auto px-4 pt-24 pb-12">
-        <div id="statusContainer" class="mb-6 flex items-center justify-between text-sm">
-            <span id="resultCount" class="text-gray-500 font-medium">Chargement du catalogue...</span>
-            <div id="filterTags" class="flex gap-2"></div>
+    <!-- Hero Section -->
+    <section id="hero" class="relative w-full h-[65vh] md:h-[85vh] overflow-hidden">
+        <div id="heroBg" class="absolute inset-0 w-full h-full shimmer"></div>
+        <div class="absolute inset-0 hero-gradient"></div>
+        <div class="absolute bottom-0 left-0 right-0 p-6 md:p-16 container mx-auto">
+            <div id="heroContent" class="max-w-3xl opacity-0 transition-opacity duration-1000">
+                <!-- Hero Content Injected -->
+            </div>
         </div>
+    </section>
 
-        <div id="loader" class="flex justify-center py-20"><div class="loader"></div></div>
-        <div id="animeGrid" class="anime-grid hidden"></div>
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 md:px-8 -mt-24 relative z-10 pb-20 space-y-16">
         
-        <div id="emptyState" class="hidden flex flex-col items-center justify-center py-20 text-center">
-            <i class="fas fa-search text-4xl text-gray-700 mb-4"></i>
-            <p class="text-gray-400">Aucun résultat trouvé.</p>
-        </div>
+        <!-- Section: Saga Tensura -->
+        <section class="space-y-6" id="sectionTensura">
+            <div class="flex items-center justify-between">
+                <h2 class="text-xl md:text-2xl font-black flex items-center gap-3">
+                    <span class="w-1.5 h-7 bg-brand-orange rounded-full"></span>
+                    SAGA TENSURA
+                </h2>
+                <div class="flex gap-2">
+                    <button onclick="scrollSect('tensuraScroll', -600)" class="w-10 h-10 rounded-full bg-brand-surface border border-brand-border hover:bg-brand-orange transition-all"><i class="fas fa-chevron-left"></i></button>
+                    <button onclick="scrollSect('tensuraScroll', 600)" class="w-10 h-10 rounded-full bg-brand-surface border border-brand-border hover:bg-brand-orange transition-all"><i class="fas fa-chevron-right"></i></button>
+                </div>
+            </div>
+            <div class="scroll-container">
+                <div id="tensuraScroll" class="horizontal-scroll no-scrollbar">
+                    <!-- Tensura Cards -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Section: Tendances -->
+        <section class="space-y-6">
+            <div class="flex items-center justify-between">
+                <h2 class="text-xl md:text-2xl font-black flex items-center gap-3">
+                    <span class="w-1.5 h-7 bg-blue-500 rounded-full"></span>
+                    TENDANCES ACTUELLES
+                </h2>
+            </div>
+            <div id="trendingGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
+                <!-- Trending Cards -->
+            </div>
+        </section>
+
+        <!-- Search Results Section (Hidden by default) -->
+        <section id="searchSection" class="hidden space-y-8 pt-10 border-t border-white/5">
+            <div class="flex items-center justify-between">
+                <h2 class="text-2xl font-black" id="searchTitle">Résultats</h2>
+                <button onclick="RAKUEN.resetSearch()" class="text-sm text-brand-orange font-bold hover:underline">Fermer la recherche</button>
+            </div>
+            <div id="searchGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6"></div>
+        </section>
+
     </main>
 
-    <!-- Modal -->
-    <div id="detailModal" class="fixed inset-0 z-[100] hidden overflow-y-auto bg-black/90 backdrop-blur-sm p-4">
-        <div class="min-h-screen flex items-center justify-center">
-            <div class="bg-brand-surface border border-brand-border w-full max-w-4xl rounded-2xl overflow-hidden relative animate-fade-in">
-                <button id="closeModal" class="absolute top-4 right-4 z-10 w-8 h-8 bg-black/50 hover:bg-brand-orange rounded-full flex items-center justify-center transition-all">
-                    <i class="fas fa-times text-sm"></i>
+    <!-- Footer -->
+    <footer class="border-t border-white/5 py-16 bg-brand-surface/30">
+        <div class="container mx-auto px-4 md:px-8 flex flex-col md:flex-row justify-between items-center gap-10">
+            <div class="flex flex-col items-center md:items-start">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-8 h-8 bg-brand-orange rounded-lg flex items-center justify-center"><i class="fas fa-dragon text-white"></i></div>
+                    <span class="text-2xl font-black">RAKUEN</span>
+                </div>
+                <p class="text-gray-500 text-sm max-w-sm text-center md:text-left">Le sanctuaire ultime pour découvrir, suivre et vivre votre passion anime. Refonte v3.4.2 Pro.</p>
+            </div>
+            <div class="flex gap-8 text-gray-400 font-bold text-sm">
+                <a href="#" class="hover:text-brand-orange transition-colors">Catalogue</a>
+                <a href="#" class="hover:text-brand-orange transition-colors">Calendrier</a>
+                <a href="#" class="hover:text-brand-orange transition-colors">GitHub</a>
+            </div>
+            <div class="text-gray-600 text-xs font-bold tracking-widest uppercase">© 2026 Rakuen Project</div>
+        </div>
+    </footer>
+
+    <!-- Detail Modal -->
+    <div id="detailModal" class="fixed inset-0 z-[200] hidden overflow-y-auto bg-brand-dark/95 backdrop-blur-2xl">
+        <div class="min-h-screen flex items-center justify-center p-4 md:p-8">
+            <div class="container max-w-6xl bg-brand-surface border border-white/10 rounded-[2.5rem] overflow-hidden relative shadow-2xl animate-slide-up">
+                <button id="closeModal" class="absolute top-8 right-8 z-10 w-12 h-12 bg-black/50 hover:bg-brand-orange rounded-full flex items-center justify-center transition-all group">
+                    <i class="fas fa-times text-xl group-hover:rotate-90 transition-transform"></i>
                 </button>
-                <div id="modalContent"></div>
+                <div id="modalBody"></div>
             </div>
         </div>
     </div>
 
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-10 left-1/2 -translate-x-1/2 z-[300] px-8 py-4 rounded-2xl bg-brand-orange text-white font-black text-sm shadow-2xl opacity-0 translate-y-10 transition-all duration-300"></div>
+
     <script>
         const RAKUEN = {
-            config: {
-                api: 'https://api.jikan.moe/v4',
-                proxy: 'https://corsproxy.io/?'
-            },
             state: {
                 all: [],
-                filtered: [],
+                tensura: [],
                 favs: JSON.parse(localStorage.getItem('rakuen_favs_v3') || '[]'),
-                fuse: null
+                fuse: null,
+                isLoaded: false
             },
 
             async init() {
+                console.log("Rakuen v3.4.2 Pro Initializing...");
                 this.bindEvents();
-                await this.loadCatalog();
+                await this.loadData();
             },
 
             bindEvents() {
-                document.getElementById('searchInput').addEventListener('input', (e) => this.handleSearch(e.target.value));
+                document.getElementById('mainSearch').addEventListener('input', (e) => this.handleSearch(e.target.value));
                 document.getElementById('closeModal').addEventListener('click', () => this.toggleModal(false));
-                document.getElementById('favBtn').addEventListener('click', () => this.toggleFavsFilter());
-                document.getElementById('calendarBtn').addEventListener('click', () => this.loadCalendar());
+                document.getElementById('navCalendar').addEventListener('click', () => this.loadCalendar());
+                document.getElementById('navFavs').addEventListener('click', () => this.toggleFavsFilter());
+                
+                // Close modal on backdrop
+                document.getElementById('detailModal').addEventListener('click', (e) => {
+                    if (e.target === document.getElementById('detailModal')) this.toggleModal(false);
+                });
             },
 
             async fetchAPI(path) {
                 try {
-                    const url = `${this.config.proxy}${encodeURIComponent(this.config.api + path)}`;
-                    const res = await fetch(url);
+                    const res = await fetch(`https://corsproxy.io/?${encodeURIComponent('https://api.jikan.moe/v4' + path)}`);
                     return await res.json();
-                } catch (e) {
-                    console.error(e);
-                    return null;
-                }
+                } catch (e) { return null; }
             },
 
-            async loadCatalog() {
-                this.showLoader(true);
-                const [top, seasonal] = await Promise.all([
+            async loadData() {
+                // Fetch multiple sources for a rich catalog
+                const [top, seasonal, tensuraRes] = await Promise.all([
                     this.fetchAPI('/top/anime?limit=25'),
-                    this.fetchAPI('/seasons/now?limit=25')
+                    this.fetchAPI('/seasons/now?limit=25'),
+                    this.fetchAPI('/anime?q=Tensei%20shitara%20Slime&order_by=start_date&sort=asc')
                 ]);
 
-                let data = [];
-                if (top?.data) data = [...data, ...top.data];
-                if (seasonal?.data) data = [...data, ...seasonal.data];
+                if (top?.data) this.state.all = [...this.state.all, ...top.data];
+                if (seasonal?.data) this.state.all = [...this.state.all, ...seasonal.data];
+                
+                // Special handling for Tensura to ensure it's complete
+                if (tensuraRes?.data) {
+                    this.state.tensura = tensuraRes.data;
+                    this.state.all = [...this.state.all, ...this.state.tensura];
+                }
 
-                // Deduplicate
-                this.state.all = Array.from(new Map(data.map(a => [a.mal_id, a])).values());
-                this.state.filtered = [...this.state.all];
+                // Deduplicate by mal_id
+                this.state.all = Array.from(new Map(this.state.all.map(a => [a.mal_id, a])).values());
                 
                 this.setupFuse();
-                this.renderGrid();
-                this.showLoader(false);
+                this.renderUI();
+                this.setupHero();
+                this.state.isLoaded = true;
             },
 
             setupFuse() {
                 this.state.fuse = new Fuse(this.state.all, {
-                    keys: ['title', 'title_english', 'synopsis'],
-                    threshold: 0.4
+                    keys: ['title', 'title_english', 'synopsis', 'genres.name'],
+                    threshold: 0.35,
+                    distance: 100
                 });
             },
 
-            handleSearch(q) {
-                if (!q.trim()) {
-                    this.state.filtered = [...this.state.all];
-                } else {
-                    this.state.filtered = this.state.fuse.search(q).map(r => r.item);
-                }
-                this.renderGrid();
+            setupHero() {
+                // Feature the latest Tensura movie or the top anime
+                const featured = this.state.tensura.find(a => a.title.includes('Soukai')) || this.state.all[0];
+                const heroBg = document.getElementById('heroBg');
+                const heroContent = document.getElementById('heroContent');
+
+                heroBg.innerHTML = `<img src="${featured.images.jpg.large_image_url}" class="w-full h-full object-cover scale-110 blur-sm opacity-40">`;
+                heroBg.classList.remove('shimmer');
+
+                heroContent.innerHTML = `
+                    <div class="flex items-center gap-3 mb-6">
+                        <span class="px-3 py-1 bg-brand-orange text-xs font-black rounded-lg">À LA UNE</span>
+                        <span class="text-gray-400 text-sm font-bold uppercase tracking-widest">${featured.type} • ${featured.year || '2026'}</span>
+                    </div>
+                    <h1 class="text-5xl md:text-8xl font-black mb-8 leading-tight tracking-tighter">${featured.title}</h1>
+                    <p class="text-gray-300 text-sm md:text-xl mb-10 line-clamp-3 max-w-2xl font-medium leading-relaxed">
+                        ${featured.synopsis || "Une aventure épique vous attend dans ce chef-d'œuvre de l'animation japonaise."}
+                    </p>
+                    <div class="flex items-center gap-5">
+                        <button onclick="RAKUEN.openDetail(${featured.mal_id})" class="bg-brand-orange hover:bg-orange-600 px-10 py-5 rounded-2xl font-black text-lg flex items-center gap-4 transition-all shadow-xl shadow-brand-orange/20">
+                            <i class="fas fa-play"></i> REGARDER MAINTENANT
+                        </button>
+                        <button onclick="RAKUEN.toggleFav(${featured.mal_id})" class="w-16 h-16 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-2xl transition-all">
+                            <i class="${this.state.favs.includes(featured.mal_id) ? 'fas text-red-500' : 'far'} fa-heart"></i>
+                        </button>
+                    </div>
+                `;
+                heroContent.classList.remove('opacity-0');
             },
 
-            renderGrid() {
-                const grid = document.getElementById('animeGrid');
-                const empty = document.getElementById('emptyState');
-                const count = document.getElementById('resultCount');
+            renderUI() {
+                // Render Tensura Section
+                const tensuraList = document.getElementById('tensuraScroll');
+                tensuraList.innerHTML = this.state.tensura.map(a => this.createCard(a, true)).join('');
 
-                grid.innerHTML = this.state.filtered.map(a => `
-                    <div class="anime-card" onclick="RAKUEN.openDetail(${a.mal_id})">
-                        <div class="relative">
-                            <img src="${a.images.jpg.large_image_url}" alt="${a.title}" loading="lazy">
-                            <div class="absolute top-2 left-2 flex flex-col gap-1">
-                                <span class="bg-brand-orange text-[10px] font-bold px-1.5 py-0.5 rounded shadow-lg">${a.type || 'TV'}</span>
-                                ${a.score ? `<span class="bg-black/70 text-[10px] font-bold px-1.5 py-0.5 rounded border border-white/10"><i class="fas fa-star text-yellow-400 mr-1"></i>${a.score}</span>` : ''}
+                // Render Trending Section
+                const trendingGrid = document.getElementById('trendingGrid');
+                trendingGrid.innerHTML = this.state.all.slice(0, 18).map(a => this.createCard(a)).join('');
+            },
+
+            createCard(a, isLarge = false) {
+                const isFav = this.state.favs.includes(a.mal_id);
+                const widthClass = isLarge ? 'w-[200px] md:w-[240px] flex-shrink-0' : '';
+                
+                return `
+                    <div class="anime-card group ${widthClass}" onclick="RAKUEN.openDetail(${a.mal_id})">
+                        <div class="relative aspect-[2/3] overflow-hidden">
+                            <img src="${a.images.jpg.large_image_url}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" loading="lazy">
+                            <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                <div class="w-12 h-12 bg-brand-orange rounded-full flex items-center justify-center shadow-xl"><i class="fas fa-play text-white ml-1"></i></div>
                             </div>
+                            <div class="absolute top-3 left-3 flex flex-col gap-1.5">
+                                <span class="bg-brand-orange text-[10px] font-black px-2 py-1 rounded shadow-lg uppercase">${a.type || 'TV'}</span>
+                                ${a.score ? `<span class="bg-black/80 backdrop-blur-md text-[10px] font-black px-2 py-1 rounded border border-white/10"><i class="fas fa-star text-yellow-400 mr-1"></i>${a.score}</span>` : ''}
+                            </div>
+                            <button onclick="event.stopPropagation(); RAKUEN.toggleFav(${a.mal_id})" class="absolute top-3 right-3 w-9 h-9 rounded-full bg-black/50 hover:bg-brand-orange flex items-center justify-center text-sm transition-all ${isFav ? 'text-red-500' : 'text-white'}">
+                                <i class="${isFav ? 'fas' : 'far'} fa-heart"></i>
+                            </button>
                         </div>
-                        <div class="anime-card-content">
-                            <h3 class="text-sm font-bold line-clamp-2 leading-tight">${a.title}</h3>
-                            <p class="text-[10px] text-gray-500 mt-1">${a.year || a.status || ''}</p>
+                        <div class="p-4">
+                            <h3 class="font-bold text-sm line-clamp-2 group-hover:text-brand-orange transition-colors mb-1">${a.title}</h3>
+                            <p class="text-[11px] text-gray-500 font-bold uppercase tracking-tighter">${a.year || a.status || 'TBA'}</p>
                         </div>
                     </div>
-                `).join('');
+                `;
+            },
 
-                grid.classList.toggle('hidden', this.state.filtered.length === 0);
-                empty.classList.toggle('hidden', this.state.filtered.length > 0);
-                count.innerText = `${this.state.filtered.length} anime(s) trouvé(s)`;
+            handleSearch(q) {
+                const section = document.getElementById('searchSection');
+                const grid = document.getElementById('searchGrid');
+                const title = document.getElementById('searchTitle');
+
+                if (!q.trim()) {
+                    section.classList.add('hidden');
+                    return;
+                }
+
+                const results = this.state.fuse.search(q).map(r => r.item);
+                section.classList.remove('hidden');
+                grid.innerHTML = results.map(a => this.createCard(a)).join('');
+                title.innerText = `Résultats pour "${q}" (${results.length})`;
+                section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            },
+
+            resetSearch() {
+                document.getElementById('searchSection').classList.add('hidden');
+                document.getElementById('mainSearch').value = '';
+                window.scrollTo({ top: 0, behavior: 'smooth' });
             },
 
             async openDetail(id) {
-                const anime = this.state.all.find(a => a.mal_id === id);
+                let anime = this.state.all.find(a => a.mal_id === id);
                 if (!anime) return;
 
-                const isFav = this.state.favs.includes(id);
-                const modal = document.getElementById('modalContent');
+                const modal = document.getElementById('detailModal');
+                const body = document.getElementById('modalBody');
                 this.toggleModal(true);
 
-                modal.innerHTML = `
-                    <div class="flex flex-col md:flex-row">
-                        <div class="md:w-1/3">
+                // Fetch full details if synopsis is missing
+                if (!anime.synopsis) {
+                    const full = await this.fetchAPI(`/anime/${id}/full`);
+                    if (full?.data) anime = full.data;
+                }
+
+                const isFav = this.state.favs.includes(id);
+
+                body.innerHTML = `
+                    <div class="flex flex-col lg:flex-row min-h-[600px]">
+                        <div class="lg:w-2/5 relative">
                             <img src="${anime.images.jpg.large_image_url}" class="w-full h-full object-cover">
+                            <div class="absolute inset-0 bg-gradient-to-t from-brand-surface via-transparent to-transparent lg:hidden"></div>
                         </div>
-                        <div class="flex-1 p-6 md:p-10">
-                            <div class="flex justify-between items-start gap-4 mb-4">
-                                <h2 class="text-2xl md:text-3xl font-bold">${anime.title}</h2>
-                                <button onclick="RAKUEN.toggleFav(${id})" class="text-xl ${isFav ? 'text-red-500' : 'text-gray-500'} hover:scale-110 transition-transform">
-                                    <i class="${isFav ? 'fas' : 'far'} fa-heart"></i>
+                        <div class="flex-1 p-8 md:p-16 flex flex-col justify-center">
+                            <div class="mb-8">
+                                <div class="flex items-center gap-3 mb-4">
+                                    <span class="px-3 py-1 bg-brand-orange/10 text-brand-orange text-xs font-black rounded-lg border border-brand-orange/20 uppercase">${anime.type}</span>
+                                    <span class="text-gray-500 font-bold">•</span>
+                                    <span class="text-gray-400 font-bold">${anime.year || '2026'}</span>
+                                </div>
+                                <h2 class="text-4xl md:text-6xl font-black mb-4 leading-tight">${anime.title}</h2>
+                                <p class="text-brand-orange font-bold text-lg">${anime.title_english || ''}</p>
+                            </div>
+
+                            <div class="flex flex-wrap gap-6 mb-10">
+                                <div class="flex flex-col">
+                                    <span class="text-gray-500 text-[10px] font-black uppercase tracking-widest mb-1">Score</span>
+                                    <span class="text-xl font-black flex items-center gap-2"><i class="fas fa-star text-yellow-400"></i> ${anime.score || 'N/A'}</span>
+                                </div>
+                                <div class="flex flex-col">
+                                    <span class="text-gray-500 text-[10px] font-black uppercase tracking-widest mb-1">Épisodes</span>
+                                    <span class="text-xl font-black">${anime.episodes || '?'}</span>
+                                </div>
+                                <div class="flex flex-col">
+                                    <span class="text-gray-500 text-[10px] font-black uppercase tracking-widest mb-1">Statut</span>
+                                    <span class="text-xl font-black text-blue-400">${anime.status}</span>
+                                </div>
+                            </div>
+
+                            <div class="mb-10">
+                                <h4 class="text-gray-500 text-[10px] font-black uppercase tracking-widest mb-4">Synopsis</h4>
+                                <p class="text-gray-300 text-lg leading-relaxed max-w-3xl">${anime.synopsis || "Aucun synopsis disponible."}</p>
+                            </div>
+
+                            <div class="flex flex-wrap gap-2 mb-12">
+                                ${anime.genres?.map(g => `<span class="px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-xs font-bold hover:bg-white/10 transition-colors cursor-default">${g.name}</span>`).join('')}
+                            </div>
+
+                            <div class="flex flex-wrap gap-5">
+                                <button class="bg-brand-orange hover:bg-orange-600 px-12 py-5 rounded-[1.5rem] font-black text-xl flex items-center gap-4 transition-all shadow-2xl shadow-brand-orange/30">
+                                    <i class="fas fa-play"></i> REGARDER
                                 </button>
-                            </div>
-                            <div class="flex flex-wrap gap-3 mb-6 text-xs font-semibold text-gray-400">
-                                <span class="text-brand-orange">${anime.type}</span>
-                                <span>${anime.episodes || '?'} eps</span>
-                                <span>${anime.score || 'N/A'} ★</span>
-                                <span>${anime.year || ''}</span>
-                            </div>
-                            <p class="text-gray-300 text-sm leading-relaxed mb-6">${anime.synopsis || 'Pas de synopsis.'}</p>
-                            <div class="flex flex-wrap gap-2">
-                                ${anime.genres?.map(g => `<span class="px-2 py-1 bg-white/5 border border-white/10 rounded text-[10px]">${g.name}</span>`).join('')}
+                                <button onclick="RAKUEN.toggleFav(${id})" class="w-20 h-20 rounded-[1.5rem] bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-3xl transition-all">
+                                    <i class="${isFav ? 'fas text-red-500' : 'far'} fa-heart"></i>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -278,33 +486,40 @@
 
             toggleFav(id) {
                 const idx = this.state.favs.indexOf(id);
-                if (idx > -1) this.state.favs.splice(idx, 1);
-                else this.state.favs.push(id);
+                if (idx > -1) {
+                    this.state.favs.splice(idx, 1);
+                    this.showToast("Retiré des favoris");
+                } else {
+                    this.state.favs.push(id);
+                    this.showToast("Ajouté aux favoris !");
+                }
                 localStorage.setItem('rakuen_favs_v3', JSON.stringify(this.state.favs));
-                this.openDetail(id);
+                this.renderUI();
+                if (!document.getElementById('detailModal').classList.contains('hidden')) this.openDetail(id);
             },
 
             toggleFavsFilter() {
-                const btn = document.getElementById('favBtn');
-                if (btn.classList.contains('text-red-500')) {
+                const btn = document.getElementById('navFavs');
+                const isFiltering = btn.classList.contains('text-red-500');
+                
+                if (isFiltering) {
                     btn.classList.remove('text-red-500');
-                    this.state.filtered = [...this.state.all];
+                    this.renderUI();
                 } else {
                     btn.classList.add('text-red-500');
-                    this.state.filtered = this.state.all.filter(a => this.state.favs.includes(a.mal_id));
+                    const favAnimes = this.state.all.filter(a => this.state.favs.includes(a.mal_id));
+                    document.getElementById('trendingGrid').innerHTML = favAnimes.map(a => this.createCard(a)).join('');
+                    this.showToast("Affichage de vos favoris");
                 }
-                this.renderGrid();
             },
 
             async loadCalendar() {
-                this.showLoader(true);
+                this.showToast("Chargement du calendrier...");
                 const res = await this.fetchAPI('/schedules');
                 if (res?.data) {
-                    this.state.filtered = res.data;
-                    this.renderGrid();
-                    document.getElementById('resultCount').innerText = "Programme de la semaine";
+                    document.getElementById('trendingGrid').innerHTML = res.data.map(a => this.createCard(a)).join('');
+                    document.getElementById('trendingGrid').scrollIntoView({ behavior: 'smooth' });
                 }
-                this.showLoader(false);
             },
 
             toggleModal(show) {
@@ -313,11 +528,17 @@
                 document.body.style.overflow = show ? 'hidden' : 'auto';
             },
 
-            showLoader(show) {
-                document.getElementById('loader').classList.toggle('hidden', !show);
-                document.getElementById('animeGrid').classList.toggle('hidden', show);
+            showToast(msg) {
+                const t = document.getElementById('toast');
+                t.innerText = msg;
+                t.classList.remove('opacity-0', 'translate-y-10');
+                setTimeout(() => t.classList.add('opacity-0', 'translate-y-10'), 3000);
             }
         };
+
+        function scrollSect(id, val) {
+            document.getElementById(id).scrollLeft += val;
+        }
 
         document.addEventListener('DOMContentLoaded', () => RAKUEN.init());
     </script>
